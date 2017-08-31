@@ -82,5 +82,6 @@ prob7 = or[(n >= k) | n <- u, k <- [maximum u]]
 
 -- 8. For every number, there is a different number such that there are no
 --    numbers between these two.
--- A: 
-prob8 = undefined
+-- A: forall n, there exists a k, where (k /= n) and forall z, not ((z > n) and (z < k))
+--prob8 = and[ or[(k - n == 1) || (n - k == 1) && (k /= n)| k <- u] | n <- u]
+prob8 = and[ or[ (n /= k) && and[not((z < k ) && ( z > n)) | z <- u] | k <- u] | n <- u]
