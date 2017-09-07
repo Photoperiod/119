@@ -2,6 +2,7 @@
 -- Mark Philipp
 -- ID: 109941708
 
+import Data.List
 -- As in Lab 1, we will be working with the finite universe [1..8]
 u = [1..8]
 
@@ -111,19 +112,19 @@ eqmod3_part = [[1,4,7], [2,5,8], [3,6]]
 
 -- Write a function part that tests whether a list of lists is a partition of u
 part :: [[Int]] -> Bool
-part bs = and [ not([] `elem` bs) && (a `union` b == u) && (i /= j ) && i `intersect` j == [] | i <-bs, j <- bs, a <- bs, b <- bs]
+part bs = and[not([] `elem` bs) && and[or[a `elem` cs | cs <- bs] | a <- u] && and[ and[ not(a `elem` cs) | a <- ds] | ds <- bs, cs <- bs, cs /= ds]]
 
 
 -- Write a function eq2part that takes an equivalence relation on u as input
 -- and returns the associated partition of u. You can assume that the input is
 -- really an equivalence relation on u.
 eq2part :: Reln -> [[Int]]
-eq2part rs = undefined
+eq2part rs = nub [[ d | (c,d) <- rs, a == c] | (a,b) <- rs]
 
 
 -- Write a function part2eq that takes a partition of u as input and returns
 -- the associated equivalence relation on u. You can assume that the argument
 -- is really a partition of u.
 part2eq :: [[Int]] -> Reln
-part2eq bs = undefined
+part2eq bs = [(x, y)| cs <- bs, x <- cs, y <- cs]
 
