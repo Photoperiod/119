@@ -67,7 +67,7 @@ rst_test = refl rst && symm rst && trans rst
 
 -- refl, symm, not trans
 rst' :: Reln
-rst' = [(1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(1,3),(3,5),(5,3),(3,1), (2,3), (3,2)]
+rst' = [(1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(1,3),(3,5),(5,3),(3,1)]
 rst'_test = refl rst' && symm rst' && not (trans rst')
 
 -- refl, not symm, trans
@@ -77,27 +77,27 @@ rs't_test = refl rs't && not(symm rs't) && trans rs't
 
 -- refl, not symm, not trans
 rs't' :: Reln
-rs't' = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8)]
+rs't' = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (1,3), (3,5)]
 rs't'_test = refl rs't' && not(symm rs't') && not(trans rs't')
 
 -- not refl, symm, trans
 r'st :: Reln
-r'st = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8)]
+r'st = [(1,1)]
 r'st_test = not(refl r'st) && symm r'st && trans r'st
 
 -- not refl, symm, not trans
 r'st' :: Reln
-r'st' = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8)]
+r'st' = [(1,2), (2,1)]
 r'st'_test = not(refl r'st') && symm r'st' && not(trans r'st')
 
 -- not refl, not symm, trans
 r's't :: Reln
-r's't = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8)]
+r's't = [(1,2), (2,5), (1,5)]
 r's't_test = not(refl r's't) && not(symm r's't) && trans r's't
 
 -- not refl, not symm, not trans
 r's't' :: Reln
-r's't' = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8)]
+r's't' = [(1,2), (2,3)]
 r's't'_test = not(refl r's't') && not(symm r's't') && not(trans r's't')
 
 
