@@ -67,38 +67,38 @@ rst_test = refl rst && symm rst && trans rst
 
 -- refl, symm, not trans
 rst' :: Reln
-rst' = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8)]
-rst'_test = refl rst && symm rst && not (trans rst)
+rst' = [(1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(1,3),(3,5),(5,3),(3,1), (2,3), (3,2)]
+rst'_test = refl rst' && symm rst' && not (trans rst')
 
 -- refl, not symm, trans
 rs't :: Reln
-rs't = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8)]
-rs't_test = refl rst && not(symm rst) && trans rst
+rs't = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (1,3)]
+rs't_test = refl rs't && not(symm rs't) && trans rs't
 
 -- refl, not symm, not trans
 rs't' :: Reln
 rs't' = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8)]
-rs't'_test = refl rst && not(symm rst) && not(trans rst)
+rs't'_test = refl rs't' && not(symm rs't') && not(trans rs't')
 
 -- not refl, symm, trans
 r'st :: Reln
 r'st = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8)]
-r'st_test = not(refl rst) && symm rst && trans rst
+r'st_test = not(refl r'st) && symm r'st && trans r'st
 
 -- not refl, symm, not trans
 r'st' :: Reln
 r'st' = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8)]
-r'st'_test = not(refl rst) && symm rst && not(trans rst)
+r'st'_test = not(refl r'st') && symm r'st' && not(trans r'st')
 
 -- not refl, not symm, trans
 r's't :: Reln
 r's't = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8)]
-r's't_test = not(refl rst) && not(symm rst) && trans rst
+r's't_test = not(refl r's't) && not(symm r's't) && trans r's't
 
 -- not refl, not symm, not trans
 r's't' :: Reln
 r's't' = [(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8)]
-r's't'_test = not(refl rst) && not(symm rst) && not(trans rst)
+r's't'_test = not(refl r's't') && not(symm r's't') && not(trans r's't')
 
 
 ---- PART 2: Partitions of u -----
@@ -119,8 +119,7 @@ part bs = and[not([] `elem` bs) && and[or[a `elem` cs | cs <- bs] | a <- u] && a
 -- and returns the associated partition of u. You can assume that the input is
 -- really an equivalence relation on u.
 eq2part :: Reln -> [[Int]]
-eq2part rs = nub [[ d | (c,d) <- rs, a == c] | (a,b) <- rs]
-
+eq2part rs = nub [[ d | c <- u, d <- u, a == c, (c,d) `elem` rs] | a <- u]
 
 -- Write a function part2eq that takes a partition of u as input and returns
 -- the associated equivalence relation on u. You can assume that the argument
