@@ -125,5 +125,6 @@ eq2part rs = nub [[ d | c <- u, d <- u, a == c, (c,d) `elem` rs] | a <- u]
 -- the associated equivalence relation on u. You can assume that the argument
 -- is really a partition of u.
 part2eq :: [[Int]] -> Reln
-part2eq bs = [(x, y)| cs <- bs, x <- cs, y <- cs]
+--part2eq bs = [(a, b)| cs <- bs, a <- cs, b <- cs]
+part2eq bs = [(a, b) | cs <- bs, a <- u, b <- u, a `elem` cs, b `elem` cs]
 
