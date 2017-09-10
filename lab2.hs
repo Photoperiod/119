@@ -2,7 +2,7 @@
 -- Mark Philipp
 -- ID: 109941708
 
-import Data.List
+import Data.List -- for nub
 -- As in Lab 1, we will be working with the finite universe [1..8]
 u = [1..8]
 
@@ -54,6 +54,13 @@ trans rs = and[ and[ and [ (a,c) `elem` rs | c <- u, (b,c) `elem` rs] | b <- u, 
 -- False
 -- *Main> symm eqmod3_reln
 -- True
+-- *Main> trans less_reln
+-- True
+-- *Main> trans leq_reln
+-- True
+-- *Main> trans eqmod3_reln
+-- True
+
 
 -- For each of the 8 possible combinations of yes/no on reflexivity,
 -- symmetry, and transitivity, find a MINIMAL relation on u that has exactly
