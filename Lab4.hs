@@ -120,14 +120,13 @@ leftquotient s (Star r1) = (Cat (leftquotient s r1) (Star r1))
 -- splits "abc" = [("","abc"), ("a","bc"), ("ab","c"), ("abc","")]
 -- [splitAt 3 xs]
 -- [([head (tail xs)], [j]) | j <- drop 0 (tail xs) ]
+droplist :: [a] -> [[a]]
+droplist [] = []
+droplist (x:xs) =  [x:xs] ++ droplist xs 
+
 splits :: [a] -> [([a], [a])]
 splits [] = []
-splits (x:xs) = [([x], xs)] ++ splits xs
-
-
---sumnum :: [Int] -> Int  
---sumnum [] = 0 
---sumnum (x:xs) = x + sum xs  
+splits xs = [([head w2], w2) | w2 <- droplist xs]
 
 match1 :: RegExp -> String -> Bool
 match1 r w = undefined
