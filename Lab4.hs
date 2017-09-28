@@ -1,5 +1,5 @@
 -- CSci 119, Lab 4
-
+import Data.List
 ---- Regular expressions, along with input and output
 data RegExp = Empty
              | Letter Char
@@ -119,14 +119,16 @@ leftquotient s (Star r1) = (Cat (leftquotient s r1) (Star r1))
 -- splits xs = list of all possible splits of xs, in order. For example,
 -- splits "abc" = [("","abc"), ("a","bc"), ("ab","c"), ("abc","")]
 -- [splitAt 3 xs]
--- [([head (tail xs)], [j]) | j <- drop 0 (tail xs) ]
-droplist :: [a] -> [[a]]
-droplist [] = []
-droplist (x:xs) =  [x:xs] ++ droplist xs 
+-- [([head w2], w2) | w2 <- droplist xs]
+droplist :: [a] -> [a]-> [([a], [a])]
+droplist [] [] = []
+droplist xs [] = [(xs, [])]
+droplist [] (y:ys) = [([], y:ys)] ++ droplist ([y]) (ys)
+droplist (xs) (y:ys) = [(xs, y:ys)] ++ droplist (xs ++ [y]) (ys)
 
 splits :: [a] -> [([a], [a])]
 splits [] = []
-splits xs = [([head w2], w2) | w2 <- droplist xs]
+splits xs = droplist [] xs
 
 match1 :: RegExp -> String -> Bool
 match1 r w = undefined
