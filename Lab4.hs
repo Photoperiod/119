@@ -51,7 +51,7 @@ emptiness (Star r1) = False
 
 -- unitarity (Empty) returns false
 -- unitarity (Letter 'a') returns false
--- unitarity (Union (Empty) (Letter 'a')) false
+-- unitarity  (Union (Star (Empty)) (Empty)) returns true
 -- unitarity (Cat (Empty) (Letter 'a')) returns false
 -- unitarity (Star (Empty)) returns true
 unitarity :: RegExp -> Bool
@@ -63,9 +63,9 @@ unitarity (Star r1) = emptiness r1 || unitarity r1
 
 -- bypassability (Empty) returns false
 -- bypassability (Letter 'a') returns false
--- bypassability (Union (Empty) (Letter 'a')) false
+-- bypassability (Union (Star (Empty)) (Letter 'a')) returns true
 -- bypassability (Cat (Empty) (Letter 'a')) returns false
--- bypassability (Star (Letter 'h')) returns false
+-- bypassability (Star (Empty)) returns true
 bypassability :: RegExp -> Bool
 bypassability Empty = False
 bypassability (Letter a) = False
@@ -73,6 +73,12 @@ bypassability (Union r1 r2) = bypassability r1 || bypassability r2
 bypassability (Cat r1 r2) = bypassability r1 && bypassability r2
 bypassability (Star r1) = True
 
+-- infiniteness Empty returns false
+-- infiniteness (Letter 'b') returns false
+-- infiniteness (Union (Star (Letter 'a')) (Empty)) returns true
+-- infiniteness infiniteness (Cat (Union (Star (Letter 'a')) (Empty)) (Letter 'a')) returns true
+-- infiniteness (Star (Letter 'a')) returns true
+-- infiniteness (Star (Empty)) returns false
 infiniteness :: RegExp -> Bool
 infiniteness Empty = False
 infiniteness (Letter a) = False
@@ -80,6 +86,12 @@ infiniteness (Union r1 r2) = infiniteness r1 || infiniteness r2
 infiniteness (Cat r1 r2) = (infiniteness r1 && not(emptiness r2)) || (infiniteness r2 && not(emptiness r1))
 infiniteness (Star r1) = not(emptiness r1) && not(unitarity r1)
 
+-- reversal Empty returns @
+-- reversal (Letter 'B') returns B
+-- reversal (Union (Union (Letter 'H') (Letter 'i')) (Union (Union (Letter 'B') (Letter 'y')) (Letter 'e'))) returns H+i+B+y+e
+-- reversal (Cat (Letter 'H') (Letter 'i')) returns iH
+-- reversal (Cat (Union (Letter 'H' ) (Letter 'i')) (Union (Letter 'B') (Letter 'i'))) returns (B+i)(H+i)
+-- (Star (Cat (Letter 'H') (Letter 'i'))) returns (iH)*
 reversal :: RegExp -> RegExp
 reversal Empty = Empty
 reversal (Letter a) = (Letter a)
@@ -87,6 +99,11 @@ reversal (Union r1 r2) = (Union (reversal r1) ( reversal r2))
 reversal (Cat r1 r2) = (Cat (reversal r2) ( reversal r1))
 reversal (Star r1) = (Star (reversal r1))
 
+--leftquotient 'a' Empty returns @
+-- leftquotient 'h' (Letter 'h') returns @*
+-- leftquotient 'h' (Union (Cat (Letter 'h') (Letter 'i')) (Cat (Letter 'b') (Letter 'i'))) returns @*i+@i
+-- leftquotient 'h' (Cat (Cat (Letter 'h') (Letter 'i')) (Cat (Cat (Letter 'b' ) (Letter 'y')) (Letter 'e'))) returns @*ibye
+-- leftquotient 'a' (Star (Letter 'b')) returns @b*
 leftquotient :: Char -> RegExp -> RegExp
 leftquotient s Empty = Empty
 leftquotient s (Letter a) = if (s == a) then Star(Empty) else Empty
@@ -101,9 +118,16 @@ leftquotient s (Star r1) = (Cat (leftquotient s r1) (Star r1))
 
 -- splits xs = list of all possible splits of xs, in order. For example,
 -- splits "abc" = [("","abc"), ("a","bc"), ("ab","c"), ("abc","")]
+-- [splitAt 3 xs]
+-- [([head (tail xs)], [j]) | j <- drop 0 (tail xs) ]
 splits :: [a] -> [([a], [a])]
-splits xs = undefined
+splits [] = []
+splits (x:xs) = [([x], xs)] ++ splits xs
 
+
+--sumnum :: [Int] -> Int  
+--sumnum [] = 0 
+--sumnum (x:xs) = x + sum xs  
 
 match1 :: RegExp -> String -> Bool
 match1 r w = undefined
