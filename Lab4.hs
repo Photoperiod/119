@@ -118,8 +118,6 @@ leftquotient s (Star r1) = (Cat (leftquotient s r1) (Star r1))
 
 -- splits xs = list of all possible splits of xs, in order. For example,
 -- splits "abc" = [("","abc"), ("a","bc"), ("ab","c"), ("abc","")]
--- [splitAt 3 xs]
--- [([head w2], w2) | w2 <- droplist xs]
 droplist :: [a] -> [a]-> [([a], [a])]
 droplist [] [] = []
 droplist xs [] = [(xs, [])]
@@ -131,8 +129,11 @@ splits [] = []
 splits xs = droplist [] xs
 
 match1 :: RegExp -> String -> Bool
-match1 r w = undefined
-
+match1 Empty w = False
+match1 (Letter a) w = or[ w1 == [a] || w2 == [a] | (w1, w2) <- splits w]
+match1 (Union r1 r2) w = match1 r1 w || match1 r2 w
+match1 (Cat r1 r2) w = or [w == (w1 ++ w2) && match1 r1 w1 && match1 r2 w2 | (w1, w2) <- splits w]
+match1 (Star r1) w = w == [] || or [w == (u ++ v) && match1 r1 u && match1 (Star r1) v | (u, v) <- splits w, u /= []]
 
 match2 :: RegExp -> String -> Bool
 match2 r w = undefined
