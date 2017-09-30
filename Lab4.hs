@@ -1,4 +1,9 @@
 -- CSci 119, Lab 4
+{-
+Mark Philipp
+109941708
+-}
+
 import Data.List
 ---- Regular expressions, along with input and output
 data RegExp = Empty
