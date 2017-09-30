@@ -136,13 +136,16 @@ match1 (Cat r1 r2) w = or [w == (w1 ++ w2) && match1 r1 w1 && match1 r2 w2 | (w1
 match1 (Star r1) w = w == [] || or [w == (u ++ v) && match1 r1 u && match1 (Star r1) v | (u, v) <- splits w, u /= []]
 
 -- let false = 0 and true = 1 for value c
-match2 :: [RegExp] -> String -> Bool -> Bool
-match2 [] w c = w == []
-match2 (Empty:rs) w c = False
-match2 ((Letter a):rs) w c = w == a:tail w && match2 (rs) (tail w) (c)
-match2 ((Union r1 r2):rs) w c = match2 (r1:rs) (w) (c) || match2 (r2:rs) (w) (c)
-match2 ((Cat r1 r2):rs) w c = match2 (r1:r2:rs) (w) (c) || (c == True && bypassability r1 && match2 (r2:rs) (w) (c))
-match2 ((Star r1):rs) w c = (c == False && match2 rs w c) || match2 (r1:(Star r1):rs) (w) (c)
+match2algorithm :: [RegExp] -> String -> Bool -> Bool
+match2algorithm [] w c = w == []
+match2algorithm (Empty:rs) w c = False
+match2algorithm ((Letter a):rs) w c = w == a:tail w && match2algorithm (rs) (tail w) (False)
+match2algorithm ((Union r1 r2):rs) w c = match2algorithm (r1:rs) (w) (c) || match2algorithm (r2:rs) (w) (c)
+match2algorithm ((Cat r1 r2):rs) w c = match2algorithm (r1:r2:rs) (w) (c) || (c == True && bypassability r1 && match2algorithm (r2:rs) (w) (True))
+match2algorithm ((Star r1):rs) w c = (c == False && match2algorithm rs w False) || match2algorithm (r1:(Star r1):rs) (w) (True)
+
+match2 :: RegExp -> String -> Bool
+match2 r w = match2algorithm [r] w False
 
 -- Some regular expressions for testing. Also, test them on other solutions
 -- to the exercises of Section 3.2 (as many as you can get).
