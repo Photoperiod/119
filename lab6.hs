@@ -141,9 +141,9 @@ powerset (x:xs) = [x:ps | ps <- powerset xs] ++ powerset xs
 
 catFSM :: (Eq a, Ord b) => FSM a -> FSM b -> FSM (a, [b])
 catFSM (qs1, s1, fs1, d1) (qs2, s2, fs2, d2) = (qs, s, fs, d) where
-  qs = qs1 >< powerset qs2
-  s  = (s1, [])
-  fs = [(q, x) | q <- qs1, x <- powerset qs2, [a | a <- x , a `elem` x && a `elem` fs2] /= []]
+  qs = [(q, x) | q <- qs1, x <- powerset qs2, let x = if q `elem` fs1 then x ++ [s2] else x]
+  s  = if s1 `elem` fs1 then (s1, [s2]) else (s1, [])
+  fs = [(q, x) | q <- qs1, x <- powerset qs2, overlap x fs2 == True]
   d  = undefined
 
 -- Machine that accepts the Kleene star of the language accepted by m1
