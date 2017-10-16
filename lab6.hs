@@ -131,15 +131,19 @@ unionFSM :: (Eq a, Eq b) => FSM a -> FSM b -> FSM (a, b)
 unionFSM (qs1, s1, fs1, d1) (qs2, s2, fs2, d2) = (qs, s, fs, d) where
   qs = qs1 >< qs2
   s  = (s1, s2)
-  fs = [(q1, q2) | q1 <- fs1, q2 <- fs2, overlap (fs1 >< qs2) (qs1 >< fs2) == False]
-  d  = undefined
+  fs = [(q1,q2) | q1 <- qs1, q2 <- qs2, q1 `elem` fs1 || q2 `elem` fs2]
+  d  = [((q1,q2), letter1, (delta1, delta2)) | (q1, letter1, delta1) <- d1, (q2, letter2, delta2)<- d2, letter1 == letter2]
 
 -- Machine that accepts the concatenation of the languages accepted by m1 and m2
+powerset :: [a] -> [[a]]
+powerset [] = [[]]
+powerset (x:xs) = [x:ps | ps <- powerset xs] ++ powerset xs
+
 catFSM :: (Eq a, Ord b) => FSM a -> FSM b -> FSM (a, [b])
 catFSM (qs1, s1, fs1, d1) (qs2, s2, fs2, d2) = (qs, s, fs, d) where
-  qs = undefined
-  s  = undefined
-  fs = undefined
+  qs = [(q, x) | q <- qs1, x <- powerset qs2, let x = if q `elem` fs1 then x ++ [s2] else x]
+  s  = if s1 `elem` fs1 then (s1, [s2]) else (s1, [])
+  fs = [(q, x) | q <- qs1, x <- powerset qs2, overlap x fs2 == True]
   d  = undefined
 
 -- Machine that accepts the Kleene star of the language accepted by m1
