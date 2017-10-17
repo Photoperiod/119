@@ -112,7 +112,7 @@ sigma = "ab"  -- Everything below should work with any choice of sigma
 
 -------- Part 1
 
--- Reimplement your RE operations from Part 1 of Lab 4 for the type RE'. 10 CASES EACH
+-- Reimplement your RE operations from Part 1 of Lab 4 for the type RE'.
 emptiness :: RE' -> Bool
 emptiness Zero = True
 emptiness One = False
@@ -274,8 +274,33 @@ Cat' [Zero,Star' (Letter' 'b')]
 
 -- Implement one more function: proper (cannot recognize epsilon). Write recursively
 proper :: RE' -> Bool
-proper r = undefined
+proper Zero = True
+proper One = False
+proper (Letter' a) = True
+proper (Union' []) = undefined
+proper (Union' [r]) = proper r
+proper (Union' (r:rs)) = proper r && proper (Union' rs)
+proper(Cat' []) = undefined
+proper (Cat' [r]) = proper r
+proper(Cat' (r:rs)) = proper r || proper (Cat' rs)
+proper (Star' r1) = False
 
+{-
+*Main> proper Zero
+True
+*Main> proper One
+False
+*Main> proper (Letter' 'a')
+True
+*Main> proper (Union' [(Letter' 'b'), (Letter' 'a')])
+True
+*Main> proper (Cat' [(Letter' 'b'), (Letter' 'a')])
+True
+*Main> proper (Star' One)
+False
+*Main> proper (Union' [One, (Letter' 'a')])
+False
+-}
 
 -------- Part 2
 
