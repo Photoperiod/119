@@ -1,4 +1,6 @@
 -- Lab 7: Convert FSMs to regular expressions
+-- Mark Philipp
+-- 109941708
 
 import Data.List (sort, elemIndex)
 -- elemIndex = a -> [a] -> Maybe Int
@@ -306,6 +308,21 @@ False
 
 -- Solve a system of proper linear equations
 -- You can assume that the system is correctly formed and proper
+
+testhead :: [[RE']] -> [RE']
+testhead ((test:test2) : tests) = map head tests
+
+testtail :: [[RE']] -> [[RE']]
+testtail ((test:test2) : tests) = map tail tests
+
+--testZip :: [RE'] -> [[RE']] -> [RE'] -> RE' -> [[RE']]
+testZip li1 liJ l1j = [Union' [Cat' [li1, (Star' (Letter' 'b')), l1j], lij] | lij <- liJ]
+testZipSeven li1 li' = Union' [Cat' [li1, (Star' (Letter' 'b')), li'], li']
+
+getSum :: [RE'] -> [RE'] -> [[RE']]
+getSum [] [] = []
+getSum (row : firstrow) (x : xi) = [[row, x]] ++ getSum firstrow xi
+
 solve :: [[RE']] -> [RE'] -> [RE']
 
 solve [] [] = []
@@ -316,24 +333,30 @@ solve ((l11:l1J) : rows) (l1':lI') = simp x1 : xI where
   -- lI' are the rest of the contants [l2',...,ln']
   
   -- first column [l21, ..., ln1]
-  lI1 = undefined
+  lI1 = map head rows -- [Zero, Zero, Zero]
 
   -- sub-matrix [[l22,...,l2n], ..., [ln2,...,lnn]]
-  lIJ = undefined
+  lIJ = map tail rows -- [[Letter' 'a',Letter' 'b',Zero],[Letter' 'a',Zero,Letter' 'b'],[Zero,Zero,Union' [Letter' 'a',Letter' 'b']]]
 
   -- [[l22_bar,...,l2n_bar], ..., [ln2_bar,...,lnn_bar]] computed via (6)
+  -- lIJ = [[Zero,Letter' 'b'],[Zero,Union' [Letter' 'a',Letter' 'b']]]
+  -- lI1 = [Letter' 'a',Zero]
+  -- l1J = [Letter' 'b',Zero]
+  
+  -- [Union' [Cat' [[Letter' 'a',Zero], (Star') Letter' 'a', [Letter' 'b',Zero]], [[Zero,Letter' 'b'],[Zero,Union' [Letter' 'a',Letter' 'b']]]]]
   lIJ_bar = zipWith3 six lI1 lIJ l1J
-  six li1 liJ l1j = undefined
+  six li1 liJ l1j = [Union' [Cat' [li1, (Star' l11), l1j], lij] | lij <- liJ]
 
   -- [l2'_bar,..., ln'_bar] computed via (7)
   lI'_bar = zipWith seven lI1 lI'
-  seven li1 li' = undefined
+  seven li1 li' = Union' [Cat' [li1, (Star' l11), l1'], li']
     
   -- recursively solve the system of size n-1
   xI = solve lIJ_bar lI'_bar
 
   -- compute x1 from xI via (5)
-  x1 = undefined
+  five l1j xi = Union' [Cat' [l1j, xi]]
+  x1 = Cat' [(Star' l11), Union' ((zipWith five l1J xI) ++ [l1'])]--Cat' [(Star' l11), (Union' [Union' [Cat' row | row <- getSum l1J xI], l1'])]--Cat' [(Star' l11), Union' (xI ++ [l1'])]
 
 
 -- Generate a regular SPLE from an FSM via formulas in Theorem 6.5
@@ -357,6 +380,19 @@ conv m = simp $ solution !! start m where
 
 
 -- Test! Test! Test! (and show your tests here)
+
+{-
+strings with no bb
+
+*Main> toRE (solve [[Letter' 'a', Letter' 'b', Zero], [Letter' 'a', Zero, Letter' 'b'], [Zero, Zero, Union' [Letter' 'a', Letter' 'b']]] [One, Zero, Zero] !! 0)
+a* WRONNNG
+
+strings with no a's
+
+*Main> toRE (solve [[Letter' 'b', Letter' 'a'], [Zero, Union' [Letter' 'a', Letter' 'b']]] [One, Zero] !! 0)
+b*
+
+-}
 
 
 
