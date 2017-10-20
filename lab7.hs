@@ -333,17 +333,12 @@ solve ((l11:l1J) : rows) (l1':lI') = simp x1 : xI where
   -- lI' are the rest of the contants [l2',...,ln']
   
   -- first column [l21, ..., ln1]
-  lI1 = map head rows -- [Zero, Zero, Zero]
+  lI1 = map head rows
 
   -- sub-matrix [[l22,...,l2n], ..., [ln2,...,lnn]]
-  lIJ = map tail rows -- [[Letter' 'a',Letter' 'b',Zero],[Letter' 'a',Zero,Letter' 'b'],[Zero,Zero,Union' [Letter' 'a',Letter' 'b']]]
+  lIJ = map tail rows
 
   -- [[l22_bar,...,l2n_bar], ..., [ln2_bar,...,lnn_bar]] computed via (6)
-  -- lIJ = [[Zero,Letter' 'b'],[Zero,Union' [Letter' 'a',Letter' 'b']]]
-  -- lI1 = [Letter' 'a',Zero]
-  -- l1J = [Letter' 'b',Zero]
-  
-  -- [Union' [Cat' [[Letter' 'a',Zero], (Star') Letter' 'a', [Letter' 'b',Zero]], [[Zero,Letter' 'b'],[Zero,Union' [Letter' 'a',Letter' 'b']]]]]
   lIJ_bar = zipWith3 six lI1 lIJ l1J
   six li1 liJ l1j = [Union' [Cat' [li1, (Star' l11), l1j], lij] | lij <- liJ]
 
@@ -356,20 +351,27 @@ solve ((l11:l1J) : rows) (l1':lI') = simp x1 : xI where
 
   -- compute x1 from xI via (5)
   five l1j xi = Union' [Cat' [l1j, xi]]
-  x1 = Cat' [(Star' l11), Union' ((zipWith five l1J xI) ++ [l1'])]--Cat' [(Star' l11), (Union' [Union' [Cat' row | row <- getSum l1J xI], l1'])]--Cat' [(Star' l11), Union' (xI ++ [l1'])]
+  x1 = Cat' [(Star' l11), Union' ((zipWith five l1J xI) ++ [l1'])]
 
 
 -- Generate a regular SPLE from an FSM via formulas in Theorem 6.5
+
+evenFSM :: FSM Int
+evenFSM = FSM { states = [0, 1, 2], start = 0, finals = [2], delta = [(0, 'a', 1), (0, 'b', 0), (1, 'a', 2), (1, 'b', 1), (2, 'a', 1), (2, 'b', 2)] }
+
+testFSM :: FSM Int
+testFSM = FSM { states = [0, 1, 2], start = 0, finals = [1], delta = [(0, 'a', 1), (0, 'b', 0), (1, 'a', 2), (1, 'b', 1), (2, 'a', 0), (2, 'b', 2)]}
+
 toSPLE :: FSM Int -> ([[RE']], [RE'])
 toSPLE m = (lIJ, lI') where
   qs = states m
   
   -- Construct matrix of coefficients (coef i j = Lij)
   lIJ = [[simp (coef i j) | j <- qs] | i <- qs]
-  coef i j = undefined
+  coef i j = Union' [Cat' [Letter' a, Star' (Zero)] | a <- sigma, delta m == [(i, a, j)]] -- Cat' [Letter' a, Star' (Zero)] where a = if delta m == [(i, value, j)] [value | value <- sigma, delta m == [(i, value, j)]]
 
   -- Construct constants
-  lI' = undefined
+  lI' = [Star' (Zero) | q <- qs, q `elem` finals m]
 
 
 -- Convert an FSM to a RE'
