@@ -309,16 +309,6 @@ False
 -- Solve a system of proper linear equations
 -- You can assume that the system is correctly formed and proper
 
-testhead :: [[RE']] -> [RE']
-testhead ((test:test2) : tests) = map head tests
-
-testtail :: [[RE']] -> [[RE']]
-testtail ((test:test2) : tests) = map tail tests
-
---testZip :: [RE'] -> [[RE']] -> [RE'] -> RE' -> [[RE']]
-testZip li1 liJ l1j = [Union' [Cat' [li1, (Star' (Letter' 'b')), l1j], lij] | lij <- liJ]
-testZipSeven li1 li' = Union' [Cat' [li1, (Star' (Letter' 'b')), li'], li']
-
 getSum :: [RE'] -> [RE'] -> [[RE']]
 getSum [] [] = []
 getSum (row : firstrow) (x : xi) = [[row, x]] ++ getSum firstrow xi
@@ -356,22 +346,16 @@ solve ((l11:l1J) : rows) (l1':lI') = simp x1 : xI where
 
 -- Generate a regular SPLE from an FSM via formulas in Theorem 6.5
 
-evenFSM :: FSM Int
-evenFSM = FSM { states = [0, 1, 2], start = 0, finals = [2], delta = [(0, 'a', 1), (0, 'b', 0), (1, 'a', 2), (1, 'b', 1), (2, 'a', 1), (2, 'b', 2)] }
-
-testFSM :: FSM Int
-testFSM = FSM { states = [0, 1, 2], start = 0, finals = [1], delta = [(0, 'a', 1), (0, 'b', 0), (1, 'a', 2), (1, 'b', 1), (2, 'a', 0), (2, 'b', 2)]}
-
 toSPLE :: FSM Int -> ([[RE']], [RE'])
 toSPLE m = (lIJ, lI') where
   qs = states m
   
   -- Construct matrix of coefficients (coef i j = Lij)
   lIJ = [[simp (coef i j) | j <- qs] | i <- qs]
-  coef i j = Union' [Cat' [Letter' a, Star' (Zero)] | a <- sigma, delta m == [(i, a, j)]] -- Cat' [Letter' a, Star' (Zero)] where a = if delta m == [(i, value, j)] [value | value <- sigma, delta m == [(i, value, j)]]
+  coef i j = Union' [Cat' [Letter' a, Star' (Zero)] | a <- sigma, d <- delta m, d == (i, a, j)] -- Cat' [Letter' a, Star' (Zero)] where a = if delta m == [(i, value, j)] [value | value <- sigma, delta m == [(i, value, j)]]
 
   -- Construct constants
-  lI' = [Star' (Zero) | q <- qs, q `elem` finals m]
+  lI' = [if q `elem` finals m then One else Zero| q <- qs]
 
 
 -- Convert an FSM to a RE'
@@ -381,22 +365,49 @@ conv m = simp $ solution !! start m where
   solution = solve matrix consts
 
 
+-- Test Machines
+evenFSM :: FSM Int
+evenFSM = FSM { states = [0, 1, 2], start = 0, finals = [2], delta = [(0, 'a', 1), (0, 'b', 0), (1, 'a', 2), (1, 'b', 1), (2, 'a', 1), (2, 'b', 2)] }
+
+testFSM :: FSM Int
+testFSM = FSM { states = [0, 1, 2], start = 0, finals = [1], delta = [(0, 'a', 1), (0, 'b', 0), (1, 'a', 2), (1, 'b', 1), (2, 'a', 0), (2, 'b', 2)]}
+
+tripleA :: FSM Int
+tripleA = FSM { states = [0, 1, 2, 3], start = 0, finals = [0, 1, 2], delta = [(0, 'a', 1), (0, 'b', 0), (1, 'a', 2), (1, 'b', 0), (2, 'a', 3), (2, 'b', 0), (3, 'a', 3), (3, 'b', 3)] }
+
 -- Test! Test! Test! (and show your tests here)
 
 {-
+solve function:
+
 strings with no bb
 
 *Main> toRE (solve [[Letter' 'a', Letter' 'b', Zero], [Letter' 'a', Zero, Letter' 'b'], [Zero, Zero, Union' [Letter' 'a', Letter' 'b']]] [One, Zero, Zero] !! 0)
-a* WRONNNG
+a*b(aa*b)*aa*+a*
 
 strings with no a's
 
 *Main> toRE (solve [[Letter' 'b', Letter' 'a'], [Zero, Union' [Letter' 'a', Letter' 'b']]] [One, Zero] !! 0)
 b*
 
+strings with no "abb"
+*Main> toRE (solve [[Letter' 'b', Letter' 'a', Zero, Zero], [Zero, Letter' 'a', Letter' 'b', Zero], [Zero, Letter' 'a', Zero, Letter' 'b'], [Zero, Zero, Zero, Union' [Letter' 'a', Letter' 'b']]] [One, One, One, Zero] !! 0)
+b*aa*+b*aa*b(aa*b)*+b*aa*b(aa*b)*aa*+b*
 -}
 
+{-
+toSPLE function
 
+*Main> toSPLE testFSM
+([[Letter' 'b',Letter' 'a',Zero],[Zero,Letter' 'b',Letter' 'a'],[Letter' 'a',Zero,Letter' 'b']],[Zero,One,Zero])
+
+*Main> toSPLE evenFSM
+([[Letter' 'b',Letter' 'a',Zero],[Zero,Letter' 'b',Letter' 'a'],[Zero,Letter' 'a',Letter' 'b']],[Zero,Zero,One])
+
+*Main> toSPLE tripleA
+([[Letter' 'b',Letter' 'a',Zero,Zero],[Letter' 'b',Zero,Letter' 'a',Zero],[Letter' 'b',Zero,Zero,Letter' 'a'],[Zero,Zero,Zero,Union' [Letter' 'a',Letter' 'b']]],[One,One,One,Zero])
+
+-}
 
 ---------------- Lab 7 ends here ----------------------------------
 
