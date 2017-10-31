@@ -96,25 +96,34 @@ testEFSM = EFSM { estates = [0, 1, 2, 3], estarts = [0, 3], efinals = [2], edelt
 -- (Hint: look at definition of reachable below)
 -- Track all states that can be hit by epsilon
 eclose :: Ord a => EFSM a -> [a] -> [a]
---eclose m qs = norm ([q' | (q, q') <- epsilon m] ++ qs)
-eclose (EFSM { estates = es, estarts = ess, efinals = efs, edelta = eds, epsilon = ees}) qs = sort $ stable $ iterate close (qs, []) where
+eclose m qs = sort $ stable $ iterate close (qs, []) where
               stable ((fr,qs):rest) = if null fr then qs else stable rest
               -- in close (fr, xs), fr (frontier) and xs (current closure) are disjoint
               close (fr, xs) = (fr', xs') where
                 xs' = fr ++ xs
                 fr' = norm $ filter (`notElem` xs') (concatMap step fr)
-                step q = norm [q' | (qfr, q')<-ees, qfr == q]				
+                step q = norm [q' | (qfr, q')<-epsilon m, qfr == q]				
 
 -- edelta_star m q w == eclosed list of states m goes to from q on w
 edelta_star :: Ord a => EFSM a -> a -> [Char] -> [a]
-edelta_star m q w = undefined
+edelta_star m q [] = [q]
+edelta_star m q (a:w) = norm [finalD | (q', letter, d) <- (edelta m), finalD <- (edelta_star m d w), letter == a, q' == q]
 
 eaccept :: Ord a => EFSM a -> [Char] -> Bool
-eaccept m w = undefined
+eaccept m w = length [w | s <- estarts m, overlap (edelta_star m s w) (efinals m)] > 0
 
 
 ----------------------------------------------------------------
 -- Machine conversions
+
+-- helper functions
+powerset :: [a] -> [[a]]
+powerset [] = [[]]
+powerset (x:xs) = [x:ps | ps <- powerset xs] ++ powerset xs
+
+subset :: Eq a => [a] -> [a] -> Bool
+subset [] ys = True
+subset (x:xs) ys = elem x ys && subset xs ys
 
 -- Easy conversion from FSM to NFSM (given)
 fsm_to_nfsm :: Eq a => FSM a -> NFSM a
@@ -128,13 +137,20 @@ fsm_to_nfsm m = NFSM {
 
 -- Conversion from NFSM to FSM by the "subset construction"
 nfsm_to_fsm :: Ord a => NFSM a -> FSM [a]
-nfsm_to_fsm m = undefined
+nfsm_to_fsm m = undefined{-FSM { states = qs, start = s, finals = fs, delta = ds } where
+              qs = powerset (nstates m)
+              s = head (nstarts m)
+              fs = norm [q | q <- qs, overlap (qs) (nfinals m)]
+              ds = norm [d | (q', a, d) <- ndelta m, q' `elem` qs]-}
 
 
 -- Similar conversion from EFSM to FSM using epsilon closure
 efsm_to_fsm :: Ord a => EFSM a -> FSM [a]
-efsm_to_fsm m = undefined
-
+efsm_to_fsm m = undefined {-FSM {states = qs, start = s, finals = fs, delta = ds} where
+              qs = [x | x <- (powerset (estates m)), (subset x (estates m)) && (eclose m x)]
+              s = (head estarts m)
+              fs = [x | x <- qs, (overlap (x) (efinals m))]
+              ds = [d | (q', a, d) <- edelta m, q' `elem` qs] -}
 
 {- Tests:
 
