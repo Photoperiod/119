@@ -96,7 +96,14 @@ testEFSM = EFSM { estates = [0, 1, 2, 3], estarts = [0, 3], efinals = [2], edelt
 -- (Hint: look at definition of reachable below)
 -- Track all states that can be hit by epsilon
 eclose :: Ord a => EFSM a -> [a] -> [a]
-eclose m qs = undefined
+--eclose m qs = norm ([q' | (q, q') <- epsilon m] ++ qs)
+eclose (EFSM { estates = es, estarts = ess, efinals = efs, edelta = eds, epsilon = ees}) qs = sort $ stable $ iterate close (qs, []) where
+              stable ((fr,qs):rest) = if null fr then qs else stable rest
+              -- in close (fr, xs), fr (frontier) and xs (current closure) are disjoint
+              close (fr, xs) = (fr', xs') where
+                xs' = fr ++ xs
+                fr' = norm $ filter (`notElem` xs') (concatMap step fr)
+                step q = norm [q' | (qfr, q')<-ees, qfr == q]				
 
 -- edelta_star m q w == eclosed list of states m goes to from q on w
 edelta_star :: Ord a => EFSM a -> a -> [Char] -> [a]
