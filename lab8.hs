@@ -137,11 +137,11 @@ fsm_to_nfsm m = NFSM {
 
 -- Conversion from NFSM to FSM by the "subset construction"
 nfsm_to_fsm :: Ord a => NFSM a -> FSM [a]
-nfsm_to_fsm m = undefined{-FSM { states = qs, start = s, finals = fs, delta = ds } where
+nfsm_to_fsm m = FSM { states = qs, start = s, finals = fs, delta = ds } where
               qs = powerset (nstates m)
-              s = head (nstarts m)
-              fs = norm [q | q <- qs, overlap (qs) (nfinals m)]
-              ds = norm [d | (q', a, d) <- ndelta m, q' `elem` qs]-}
+              s = nstarts m
+              fs = norm [q | q <- qs, overlap (q) (nfinals m)]
+              ds = norm [(q, letter, q') | (q, letter, q') <- (ndelta m), q `elem` qs]--norm [d | (q', a, d) <- ndelta m, q' `elem` qs]
 
 
 -- Similar conversion from EFSM to FSM using epsilon closure
