@@ -1,5 +1,6 @@
 {-
 Mark Philipp
+109941708
 -}
 
 -- Lab 8: Non-deterministic finite state machines
@@ -83,25 +84,21 @@ data NFSM a = NFSM {
 testNFSM = NFSM { nstates = [0, 1, 2], nstarts = [0, 1], nfinals = [2], ndelta = [(0, 'b', 1), (1, 'a', 0),(1, 'a', 2), (2, 'b', 2)]}
  
 -- nap ts q a == the normalized list of q' such that (q, a, q') is in ts
--- non-deterministic ap function from above. use norm
 nap :: Ord a => [(a,Char,a)] -> a -> Char -> [a]
 nap ts q a = norm [ q' | (newQ, newLetter, q') <- ts, newQ == q, newLetter == a]
 
 -- ndelta_star m q w == normalized list of states m goes to from q on w
--- takes a whole string and determines delta of it. Recursive def. Ch. 8 page 50
 ndelta_star :: Ord a => NFSM a -> a -> [Char] -> [a]
 ndelta_star m q [] = [q]
 ndelta_star m q (a:w) = [q'' | q' <- (nap (ndelta m) (q) (a)), q'' <- ndelta_star m q' w ]
 
--- naccept on page 50 too
 naccept :: Ord a => NFSM a -> [Char] -> Bool
 naccept m w = length [s | s <- nstarts m, overlap (ndelta_star m s w) (nfinals m)] > 0
 
 
 ----------------------------------------------------------------
 -- Nondeterministic FSMs with epsilon moves
--- epsilon pairs (this element can transition to, this element)
--- 
+
 data EFSM a = EFSM {
   estates :: [a],
   estarts :: [a],
@@ -129,10 +126,10 @@ edelta_hat m q a = norm [d | (q', letter, d) <- edelta m, x <- (powerset (estate
 
 edelta_star :: Ord a => EFSM a -> a -> [Char] -> [a]
 edelta_star m q [] = eclose m [q]
-edelta_star m q (a:w) = norm [finalD | hat <- (eclose m (edelta_hat m q a)), finalD <- (edelta_star m hat w)]--norm [finalD | (q', letter, d) <- (edelta m), finalD <- eclose m (edelta_star m d w), letter == a, q' == q]
+edelta_star m q (a:w) = norm [finalD | hat <- (eclose m (edelta_hat m q a)), finalD <- (edelta_star m hat w)]
 
 eaccept :: Ord a => EFSM a -> [Char] -> Bool
-eaccept m w = length [w | s <- eclose m (estarts m), overlap (edelta_star m s w) (efinals m)] > 0--and [overlap (edelta_star m s w) (efinals m) | s <- eclose m (estarts m)]--
+eaccept m w = length [w | s <- eclose m (estarts m), overlap (edelta_star m s w) (efinals m)] > 0
 
 
 ----------------------------------------------------------------
@@ -197,6 +194,7 @@ accept2_aux m q (a:w) = accept2_aux (m) (delta2 m q a) (w)
 
 accept2 :: Eq a => FSM a -> [Char] -> Bool
 accept2 m w = accept2_aux (m) (start m) (w)
+
 {- Tests:
 
 1. m and fsm_to_nfsm m accept the same strings
