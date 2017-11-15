@@ -169,7 +169,6 @@ intify m = FSM {
 ---------------- Lab 9 begins here ----------------
 
 -- Bypassable for extended REs, computed directly by recursion
--- byp from lab 7
 byp :: RE' -> Bool
 byp Zero = False
 byp One = True
@@ -182,9 +181,25 @@ byp (Cat' [r]) = byp r
 byp (Cat' (r:rs)) = byp r && byp (Cat' rs)
 byp (Star' r1) = True
 
+{-
+*Main> byp (re "ab+*")
+True
+*Main> byp (re "ab.a*+")
+True
+*Main> byp (re "ab.a+")
+False
+*Main> byp (re "ab.")
+False
+*Main> byp One
+True
+*Main> byp Zero
+False
+*Main> byp (re "a*")
+True
+-}
+
 -- Regular-expression derivatives (aka left quotients) on extended REs,
 -- computed directly.
--- left quotient from lab 7
 deriv :: Char -> RE' -> RE'
 deriv s Zero = Zero
 deriv s One = deriv (s) (Star' Zero)
@@ -197,28 +212,84 @@ deriv s (Cat' [r]) = (deriv s r)
 deriv s (Cat' (r:rs)) = if(byp r == True) then (Union' [(Cat' [(deriv s r), (Cat' rs)]), (deriv s (Cat' rs))]) else (Cat' [(deriv s r), (Cat' rs)])
 deriv s (Star' r1) = (Cat' [(deriv s r1), (Star' r1)])
 
+{-
+derivation of (a + b)*bb
+
+*Main> toRE (simp ( deriv 'a' (re "ab+*bb..")))
+(a+b)*bb
+*Main> toRE (simp ( deriv 'b' (re "ab+*bb..")))
+b+(a+b)*bb
+*Main> toRE (simp ( deriv 'b' (re "bab+*bb..+")))
+1+b+(a+b)*bb
+*Main> toRE (simp ( deriv 'a' (re "bab+*bb..+")))
+(a+b)*bb
+*Main> toRE (simp ( deriv 'a' (re "1b+ab+*bb..+")))
+(a+b)*bb
+*Main> toRE (simp ( deriv 'b' (re "1b+ab+*bb..+")))
+1+b+(a+b)*bb
+
+--------------------------------------
+
+derivation of (a + ba)*
+
+*Main> toRE (deriv 'a' (re "aba.+*"))
+(1+@a)(a+ba)*
+*Main> toRE (simp (deriv 'a' (re "aba.+*")))
+(a+ba)*
+*Main> toRE (simp (deriv 'b' (re "aba.+*")))
+a(a+ba)*
+*Main> toRE (simp (deriv 'a' (re "aaba.+*.")))
+(a+ba)*
+*Main> toRE (simp (deriv 'b' (re "aaba.+*.")))
+@
+*Main> toRE (simp (deriv 'a' (re "@")))
+@
+*Main> toRE (simp (deriv 'b' (re "@")))
+@
+-}
+
 -- Convert an RE' to an FSM using the derivative (Brzozowski) construction.
 -- States are SIMPLIFIED extended REs.  Note: to construct all the states,
 -- you will have to use another closure process.
--- states = closure from lab 8. Change starting value we give it initially and our step. How we step from one state to another state
--- iterate close ([s], []). Figure out what [s] should be here.
 
 conv :: RE' -> FSM RE'
 conv r = FSM {
     states = qs',
-	start = r,
+	start = simp r,
 	finals = fs',
 	delta = d'
 } where
     qs' = sort $ stable $ iterate close ([simp r], [])
-    fs' = [r' | r' <- qs', byp r' == True]
-    d'  = [(r', a, d) | r' <- qs', a <- sigma, let d = deriv a r']
+    fs' = [r' | r' <- qs', (byp r') == True]
+    d'  = [(simp r', a, simp d) | r' <- qs', a <- sigma, let d = deriv a r']
     stable ((fr,qs):rest) = if null fr then qs else stable rest
     close (fr, xs) = (fr', xs') where  
       xs' = fr ++ xs
       fr' = norm $ filter (`notElem` xs') (concatMap step fr)
       step q = [simp (deriv a q) | a <- sigma]
 
-
+testFSM = FSM{states = [0, 1], start = 0, finals = [1], delta = [(0, 'a', 1), (0, 'b', 0), (1, 'a', 1), (1, 'b', 1)]}
 -- Test, and show your tests! You may copy code from previous labs to help.
+{-
 
+strings that end in bb
+(a + b)*bb
+
+*Main> intify (conv (re "ab+*bb.."))
+([0,1,2], 2, [0], [0/a>2,0/b>0,1/a>2,1/b>0,2/a>2,2/b>1])
+
+-----------------------------------------------------------------------
+
+all strings that end in aa or ab
+a(b + ab)*(1 + a)
+
+*Main> intify (conv (re "abab.+*.1a+."))
+([0,1,2,3], 2, [1,3], [0/a>0,0/b>0,1/a>0,1/b>3,2/a>3,2/b>0,3/a>1,3/b>3])
+
+-----------------------------------------------------------------------
+
+(a + ba)*
+
+*Main> intify (conv (re "aba.+*"))
+([0,1,2], 2, [2], [0/a>0,0/b>0,1/a>2,1/b>0,2/a>2,2/b>1])
+-}
