@@ -162,6 +162,18 @@ hinvimage m k = FSM{
 } where
     d' = [(q, letter, (delta_star (m) (q) (k(letter)))) | letter <- sigma, q <- states m]
 
+{-
+*Main> hinvimage oneA kTest
+([0,1], 0, [1], [0/a>1,1/a>1,0/b>1,1/b>1])
+
+*Main> hinvimage testFSM kTest
+([0,1,2], 0, [1], [0/a>1,1/a>2,2/a>0,0/b>1,1/b>2,2/b>0])
+
+*Main> hinvimage evenFSM kTest
+([0,1,2], 0, [2], [0/a>1,1/a>2,2/a>1,0/b>1,1/b>2,2/b>1])
+-}
+	
+	
 -- L(rightq m a) = { w | wa in L(m) }
 rightq :: Ord a => FSM a -> Char -> FSM a
 rightq m a = FSM {
