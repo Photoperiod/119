@@ -47,17 +47,37 @@ testFSM = FSM {
 flip :: Ord a => (a,a) -> (a,a)
 flip (a,b) = if a < b then (a,b) else (b,a)
 
-closure :: Ord a => FSM a -> [a] -> [a]
-closure m qs = sort $ stable $ iterate close (qs, []) where
+getX :: Ord a => FSM a -> [(a, a)]
+getX m = norm [Main.flip (q1, q2) | q1 <- states m, q2 <- states m, q1 /= q2, q1 < q2, (q1 `elem` finals m && q2 `notElem` finals m) || (q2 `elem` finals m && q1 `notElem` finals m)]
+
+deltaInv :: Ord a => FSM a -> a -> Char -> [a]
+deltaInv m q a = norm [q' | (q', letter, dest) <- delta m, letter == a, dest == q]
+
+close :: Ord a => FSM a -> [(a, a)]
+close m = norm(getX m ++ norm [Main.flip (d1, d2) | (q1, q2) <- getX m, l <- sigma, d1 <- deltaInv m q1 l, d2 <- deltaInv m q2 l])
+
+{-
+close :: Ord a => FSM a -> [a] -> [(a, a)]
+close m [] = []
+close m qs = norm [Main.flip (q, q') | (q, q') <- createPairs m, (d, l, dest) <- delta m, (d', l', dest') <- delta m, d == q, d' == q', d /= d', l == l', (dest, dest') `elem` createInitialPairs m || (dest, dest') `elem` close m]
+
+closure :: Ord a => FSM a -> [(a, a)]
+closure m = norm [Main.flip (q, q') | q <- states m, q' <- states m, q /= q', (Main.flip (q, q')) `notElem` (close (m) (states m))]
+-}
+
+--closure m = norm [Main.flip (qfr, q') | (qfr, q')<-(createPairs (m)), (qd, letter, qdest) <- delta m, (qd', letter', qdest') <- delta m, qd /= qd' && (qd, qd') `elem` (createPairs (m)), (qdest, qdest') `notElem` createInitialPairs m]	
+
+{-closure :: Ord a => FSM a -> [a] -> [(a, a)]
+closure m qs = sort $ stable $ iterate close (createPairs m, []) where
               stable ((fr,qs):rest) = if null fr then qs else stable rest
               -- in close (fr, xs), fr (frontier) and xs (current closure) are disjoint
               close (fr, xs) = (fr', xs') where
                 xs' = fr ++ xs
                 fr' = norm $ filter (`notElem` xs') (concatMap step fr)
-                step q = norm [q' | (qfr, q')<-(createPairs (states m)), qfr == q]	
-
---createPairs :: Ord a => [a] -> [(a, a)]
---createPairs qs = norm [Main.flip (q, q') | q <- qs, q' <- qs, q' /= q]
+                step q = norm [Main.flip (qfr, q') | (qfr, q')<-(createPairs (m)), (qd, letter, qdest) <- delta m, (qd', letter', qdest') <- delta m, qd /= qd' && (qd, qd') `elem` (createPairs (m)), (qdest, qdest') `notElem` createInitialPairs m]	
+-}
+createPairs :: Ord a => FSM a -> [(a, a)]
+createPairs m = norm [Main.flip (q, q') | q <- states m, q' <- states m, q /= q', Main.flip (q, q') `notElem` createInitialPairs m]
 
 createInitialPairs :: Ord a => FSM a -> [(a, a)]
 createInitialPairs m = norm [Main.flip (q, q') | q <- states m, q' <- states m, (q' /= q) && (q' `notElem` finals m && q `elem` finals m) || (q `notElem` finals m && q' `elem` finals m)]
