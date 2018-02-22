@@ -2,6 +2,7 @@
 -- Mark Philipp
 -- 109941708
 
+import Data.List (nub)
 -- Ordinary regular expressions and a show method for them
 data RE  = Empty | Letter Char | Union RE RE | Cat RE RE | Star RE
 
@@ -82,6 +83,9 @@ oneA = FSM {states = [0, 1], start = 0, finals = [1], delta = [(0, 'a', 1), (0, 
 
 oneB = FSM {states = [0, 1], start = 0, finals = [1], delta = [(0, 'a', 0), (0, 'b', 1), (1, 'a', 1), (1, 'b', 1)]}
 
+newTestFSM :: FSM [Char]
+newTestFSM = FSM { states = ["r0", "r1", "r2", "T"], start = "r0", finals = ["r1", "r2"], delta = [("r0", 'a', "r1"), ("r0", 'b', "T"), ("r1", 'a', "r2"), ("r1", 'b', "r1"), ("r2", 'a', "T"), ("r2", 'b', "r1"), ("T", 'a', "T"), ("T", 'b', "T")]}
+
 -- L(complementFSM M) = Sigma^* - L(M)
 complementFSM :: Ord a => FSM a -> FSM a
 complementFSM m = FSM {
@@ -126,6 +130,11 @@ kTest :: Char -> [Char]
 kTest a | a == 'a' = "ba" 
         | a == 'b' = "bbab" 
         | otherwise = ""
+		
+kTest2 :: Char -> [Char]
+kTest2 a | a == 'a' = "aab"
+         | a == 'b' = "bba"
+         | otherwise = ""
 
 barHelper :: [Char] -> RE
 barHelper [] = Star (Empty)
@@ -175,14 +184,14 @@ hinvimage m k = FSM{
 	
 	
 -- L(rightq m a) = { w | wa in L(m) }
-rightq :: Ord a => FSM a -> Char -> FSM a
+rightq :: Ord a => FSM a -> [[Char]] -> FSM a
 rightq m a = FSM {
     states = states m,
     start = start m,
     finals = f',
 	delta = delta m
 } where
-    f' =  [q | q <- states m, (delta_star m q [a]) `elem` (finals m)]
+    f' =  nub [q | q <- states m, w <- a, (delta_star m q w) `elem` (finals m)]
 
 {-
 *Main> rightq oneA 'a'
