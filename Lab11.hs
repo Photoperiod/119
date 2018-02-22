@@ -6,9 +6,6 @@ import Data.List (sort, subsequences)
 -- Sigma = [a,b] for testing, but must work for any finite list
 sigma :: [Char]
 sigma = "ab"
--- Cartesian product
-(><) :: [a] -> [b] -> [(a,b)]
-xs >< ys = [(x,y) | x <- xs, y <- ys]
 
 -- Finite state machines (as records), indexed by the type of their states
 -- M = FSM {states=qs, start=s, finals=fs, delta=d}, and a show instance.
@@ -47,49 +44,49 @@ testFSM = FSM {
 flip :: Ord a => (a,a) -> (a,a)
 flip (a,b) = if a < b then (a,b) else (b,a)
 
-getX :: Ord a => FSM a -> [(a, a)]
-getX m = norm [Main.flip (q1, q2) | q1 <- states m, q2 <- states m, q1 /= q2, q1 < q2, (q1 `elem` finals m && q2 `notElem` finals m) || (q2 `elem` finals m && q1 `notElem` finals m)]
-
+-- delta that works in reverse
 deltaInv :: Ord a => FSM a -> a -> Char -> [a]
 deltaInv m q a = norm [q' | (q', letter, dest) <- delta m, letter == a, dest == q]
 
-close :: Ord a => FSM a -> [(a, a)]
-close m = norm(getX m ++ norm [Main.flip (d1, d2) | (q1, q2) <- getX m, l <- sigma, d1 <- deltaInv m q1 l, d2 <- deltaInv m q2 l])
+-- I have no idea. This is basically just adding inequivalent states into a list of previously found inequivalent states until we find no more new ones
+getX :: Ord a => FSM a -> [(a, a)] -> [(a, a)]
+getX m [] = []
+getX m qs = if length qs == length (norm [Main.flip (d1, d2) | (q1, q2) <- qs, l <- sigma, d1 <- deltaInv m q1 l, d2 <- deltaInv m q2 l]) then norm qs else norm (qs ++ (getX (m) (norm [Main.flip (d1, d2) | (q1, q2) <- qs, l <- sigma, d1 <- deltaInv m q1 l, d2 <- deltaInv m q2 l])))
 
-{-
-close :: Ord a => FSM a -> [a] -> [(a, a)]
-close m [] = []
-close m qs = norm [Main.flip (q, q') | (q, q') <- createPairs m, (d, l, dest) <- delta m, (d', l', dest') <- delta m, d == q, d' == q', d /= d', l == l', (dest, dest') `elem` createInitialPairs m || (dest, dest') `elem` close m]
-
+-- find the final equivalent states. Any state that is in the states of m that is NOT in getX are the final equivalence states
 closure :: Ord a => FSM a -> [(a, a)]
-closure m = norm [Main.flip (q, q') | q <- states m, q' <- states m, q /= q', (Main.flip (q, q')) `notElem` (close (m) (states m))]
--}
+closure m = norm [Main.flip (q1, q2) | q1 <- states m, q2 <- states m, q1 /= q2, Main.flip (q1, q2) `notElem` (getX m (createInitialPairs m))]
 
---closure m = norm [Main.flip (qfr, q') | (qfr, q')<-(createPairs (m)), (qd, letter, qdest) <- delta m, (qd', letter', qdest') <- delta m, qd /= qd' && (qd, qd') `elem` (createPairs (m)), (qdest, qdest') `notElem` createInitialPairs m]	
+-- get second element from equivalent pair
+second :: Ord a => FSM a -> [a]
+second m = norm [snd q | q <- closure m]
 
-{-closure :: Ord a => FSM a -> [a] -> [(a, a)]
-closure m qs = sort $ stable $ iterate close (createPairs m, []) where
-              stable ((fr,qs):rest) = if null fr then qs else stable rest
-              -- in close (fr, xs), fr (frontier) and xs (current closure) are disjoint
-              close (fr, xs) = (fr', xs') where
-                xs' = fr ++ xs
-                fr' = norm $ filter (`notElem` xs') (concatMap step fr)
-                step q = norm [Main.flip (qfr, q') | (qfr, q')<-(createPairs (m)), (qd, letter, qdest) <- delta m, (qd', letter', qdest') <- delta m, qd /= qd' && (qd, qd') `elem` (createPairs (m)), (qdest, qdest') `notElem` createInitialPairs m]	
--}
-createPairs :: Ord a => FSM a -> [(a, a)]
-createPairs m = norm [Main.flip (q, q') | q <- states m, q' <- states m, q /= q', Main.flip (q, q') `notElem` createInitialPairs m]
+-- get first element from equivalent pair
+first :: Ord a => FSM a -> [a]
+first m = norm [fst q | q <- closure m]
 
+-- used by start state to determine if start state is part of equivalence class
+getEQState :: Ord a => FSM a -> a -> a
+getEQState m q = if length ([q2 | (q1, q2) <- closure m, q == q1]) == 0 then q else head [q2 | (q1, q2) <- closure m, q == q1]
+
+-- Find initial inequivalent states
 createInitialPairs :: Ord a => FSM a -> [(a, a)]
 createInitialPairs m = norm [Main.flip (q, q') | q <- states m, q' <- states m, (q' /= q) && (q' `notElem` finals m && q `elem` finals m) || (q `notElem` finals m && q' `elem` finals m)]
 
 minimize :: Ord a => FSM a -> FSM a
 minimize m = FSM {
-    states = undefined, --[(q', [q'' | q'' <- states m, (q' `elem` finals m && q'' `notElem` finals m) || (q'' `elem` finals m && q' `notElem` finals m)]) | q' <- states m],
-    start = start m,
-    finals = undefined,
-    delta = undefined
-}
+    states = qs',
+    start = s',
+    finals = fs',
+    delta = ds'
+} where
+    qs' = norm ((second m) ++ [q | q <- states m, q `notElem` first m])
+    s' = getEQState m (start m)
+    fs' = [q | q <- qs', q `elem` finals m]
+    ds' = [(q, l, d') | (q, l, d') <- delta m, q `elem` qs', d' `elem` qs']
 
---deltainv :: Ord a => a -> Char -> [a]
---deltainv q a = [q' | delta q' a = q]
+{-
+*Main> minimize testFSM
+(["a","b","ba","bb","empty"], "empty", ["ba"], ["empty"/a>"a","empty"/b>"b","b"/a>"ba","b"/b>"bb","ba"/a>"ba","ba"/b>"ba","bb"/a>"bb","bb"/b>"bb"])
+-}
 
